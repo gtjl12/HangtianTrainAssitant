@@ -9,9 +9,9 @@
 // @grant        GM_getValue
 // @grant        GM_deleteValue
 // @grant        GM_openInTab
-// @version     0.0.1
-// @author      gtjl12
-// @description 27/8/2022, 22:22:22 PM
+// @version      0.0.2
+// @author       gtjl12
+// @description  29/8/2022, 22:40:22 PM
 // ==/UserScript==
 
 
@@ -136,14 +136,15 @@ function controlPlayer()
     let pauseBtns = document.getElementsByClassName('vjs-paused');
     let playingBtns = document.getElementsByClassName('vjs-playing');
     let videoPlayer = document.getElementsByTagName('video');
-    if(videoPlayer.length > 0 && referseBtns.length > 0 && videoPlayer[0].paused == true){
+    if(videoPlayer.length > 0 && $('.alert-shadow').css('display') == 'none' && referseBtns.length > 0 && videoPlayer[0].paused == true ){
         document.getElementsByClassName('videojs-referse-btn')[0].click();
         setTimeout(() => console.log("视频已暂停，等待重新播放"), 3000)
         videoPlayer[0].play();
     }
-    let okBtns = document.getElementsByClassName('btn-ok');
-    if(okBtns.length > 0){
-        $(".btn-ok")[0].click();
+    let alertText = document.getElementsByClassName('alert-text');
+    if( alertText.length > 0 && alertText[0].innerHTML == "亲爱的学员，目前学习正在计时中，请不要走开哦!" )
+    {
+        alertText[0].nextElementSibling.click()
     }
     scroN++;
     window.scrollTo(0, scroN%2);
@@ -188,14 +189,24 @@ var mainFunc = setInterval(function () {
             {
                 creatTips();
             }
+            let currentCourse = document.getElementsByClassName('chapter-list-box required focus');
+            let nextCourse = $(currentCourse).next();
             let subFinishDiv = document.getElementsByClassName('anew-text');
+            let alertMsg = document.getElementsByClassName('alert-msg');
+            let alertShadow = document.getElementsByClassName('alert-shadow');
             let videoPlayer = document.getElementsByTagName('video');
-            if( ( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( subFinishDiv.length > 0 && subFinishDiv[0].textContent == '您已完成该课程的学习'))
+            if( nextCourse.length == 0 && (( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( subFinishDiv.length > 0 && subFinishDiv[0].textContent == '您已完成该课程的学习')))
             {
                 changeTips();
                 clearInterval(watchingCourse);
                 closeWin();
-            }else{
+            }
+            // 有重看提示，重播
+            else if( nextCourse.length > 0 && $('.alert-shadow').css('display') != 'none' && alertMsg.length > 0 && alertMsg[0].innerHTML == "本节课件还未完成学习，是否重新播放?" )
+            {
+                document.getElementsByClassName('btn-repeat btn-ok')[0].click()
+            }
+            else{
                 controlPlayer();
             }
         },3000)
@@ -208,12 +219,26 @@ var mainFunc = setInterval(function () {
         {
             creatTips();
         }
+        let currentCourse = document.getElementsByClassName('chapter-list-box required focus');
+        let nextCourse = $(currentCourse).next();
         let CoursefinishDiv = document.getElementsByClassName('anew-text');
-        if( ( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( CoursefinishDiv.length > 0 && CoursefinishDiv[0].textContent == '您已完成该课程的学习'))
+        let alertMsg = document.getElementsByClassName('alert-msg');
+        if( nextCourse.length == 0 && (( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( CoursefinishDiv.length > 0 && CoursefinishDiv[0].textContent == '您已完成该课程的学习')))
         {
             changeTips();
             clearInterval(mainFunc);
-        }else{
+        }
+        // 没有重看提示，正常播放完，系统自动播放下一节
+        else if( nextCourse.length > 0 && videoPlayer[0].currentTime == videoPlayer[0].duration && alertMsg.length == 0 )
+        {
+            // nextCourse.click();
+        }
+        // 有重看提示，重播
+        else if( nextCourse.length > 0 && $('.alert-shadow').css('display') != 'none' && alertMsg.length > 0 && alertMsg[0].innerHTML == "本节课件还未完成学习，是否重新播放?" )
+        {
+            document.getElementsByClassName('btn-repeat btn-ok')[0].click();
+        }
+        else{
             controlPlayer();
         }
     }
