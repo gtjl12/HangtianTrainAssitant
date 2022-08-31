@@ -3,15 +3,13 @@
 // @namespace    HangtianTrain Scripts
 // @match        https://train.casicloud.com/*
 // @require      https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.5.1.min.js
-// @require      https://cdn.jsdelivr.net/npm/blueimp-md5@2.9.0
-// @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
 // @grant        GM_openInTab
-// @version      0.0.2
+// @version      0.0.3
 // @author       gtjl12
-// @description  29/8/2022, 22:40:22 PM
+// @description  2022/8/31, 23:12:22 PM
 // ==/UserScript==
 
 
@@ -29,7 +27,7 @@ function createStartButton() {
         try {// IE8.0及其以下版本
             startButton.attachEvent('onclick', preWatchCourse);
         } catch (e) {// 早期浏览器
-            console.log("航天云课堂专题刷课Error: 开始学习按钮绑定事件失败")
+            console.log("航天云课堂辅助工具：Error：开始学习按钮绑定事件失败")
         }
     }
     //插入节点
@@ -51,7 +49,6 @@ function creatCourseInfo(){
                 courseLink.push(linkHeader+$(element).attr("data-resource-id")+linkTail);
                 todoCourseNum++;
             }
-
         });
         let courseDiv = document.createElement("div");
         courseDiv.setAttribute("id", "courseDiv");
@@ -100,9 +97,17 @@ async function preWatchCourse(){
         console.log("正在学习第" + (i + 1) + "节课");
         let newPage = GM_openInTab(courseLink[i], { active: true, insert: true, setParent: true })
         await waitingClose(newPage);
-        console.log('本专题学习已全部完成');
     }
     finishFlag = 1;
+    //看完一个专题全部课程，停止循环
+    if( finishFlag == 1 && loadFlag == 1 && courseFlag == 1)
+    {
+        console.log('本专题学习已全部完成');
+        startButton.innerText = "已完成本专题学习";
+        startButton.style.cursor = "default";
+        startButton.setAttribute("disabled", true);
+        clearInterval(watchCourseCyc_i );
+    }
     return;
 
 }
@@ -136,7 +141,7 @@ function controlPlayer()
     let pauseBtns = document.getElementsByClassName('vjs-paused');
     let playingBtns = document.getElementsByClassName('vjs-playing');
     let videoPlayer = document.getElementsByTagName('video');
-    if(videoPlayer.length > 0 && $('.alert-shadow').css('display') == 'none' && referseBtns.length > 0 && videoPlayer[0].paused == true ){
+    if(videoPlayer.length > 0 && ($('.alert-shadow').length == 0 || $('.alert-shadow').css('display') == 'none') && referseBtns.length > 0 && videoPlayer[0].paused == true ){
         document.getElementsByClassName('videojs-referse-btn')[0].click();
         setTimeout(() => console.log("视频已暂停，等待重新播放"), 3000)
         videoPlayer[0].play();
@@ -162,7 +167,11 @@ var linkTail = "/6/1";
 var courseLink = [];
 var scroN = 0;
 
-var mainFunc = setInterval(function () {
+//循环计数器
+var genStartDivCyc_i = 0;
+var watchCourseCyc_i = 0;
+
+var genStartDivCyc = setInterval(function () {
 
     //如果本页是专题页面，创建学习按钮
     let subjectDiv = document.getElementsByClassName("subject-catalog-wrapper");
@@ -176,44 +185,58 @@ var mainFunc = setInterval(function () {
         {
             createStartButton();
             loadFlag = 1;
+            console.log("学习按钮创建成功!");
+            clearInterval(genStartDivCyc);
         }
     }
+    else
+    {
+        genStartDivCyc_i++;
+        console.log("genStartDivCyc_i = " + genStartDivCyc_i);
 
+    }
+    //一分钟还没创建学习按钮，停止循环
+    if(genStartDivCyc_i > 9)
+    {
+        console.log("学习按钮创建失败!");
+        clearInterval(genStartDivCyc);
+    }
+}, 1000);
 
+var watchCourseCyc =  setInterval(function () {
     let url = window.location.href;
+    let videoPlayer = document.getElementsByTagName('video');
+
     //如果是从专题进入课程
     if( typeof GM_getValue("watchingUrl") != 'object' && url == GM_getValue("watchingUrl") )
     {
-        var watchingCourse = setInterval(function () {
-            if( document.getElementById('studyTip') == null )
-            {
-                creatTips();
-            }
-            let currentCourse = document.getElementsByClassName('chapter-list-box required focus');
-            let nextCourse = $(currentCourse).next();
-            let subFinishDiv = document.getElementsByClassName('anew-text');
-            let alertMsg = document.getElementsByClassName('alert-msg');
-            let alertShadow = document.getElementsByClassName('alert-shadow');
-            let videoPlayer = document.getElementsByTagName('video');
-            if( nextCourse.length == 0 && (( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( subFinishDiv.length > 0 && subFinishDiv[0].textContent == '您已完成该课程的学习')))
-            {
-                changeTips();
-                clearInterval(watchingCourse);
-                closeWin();
-            }
-            // 有重看提示，重播
-            else if( nextCourse.length > 0 && $('.alert-shadow').css('display') != 'none' && alertMsg.length > 0 && alertMsg[0].innerHTML == "本节课件还未完成学习，是否重新播放?" )
-            {
-                document.getElementsByClassName('btn-repeat btn-ok')[0].click()
-            }
-            else{
-                controlPlayer();
-            }
-        },3000)
+        if( document.getElementById('studyTip') == null )
+        {
+            creatTips();
+        }
+        let currentCourse = document.getElementsByClassName('chapter-list-box required focus');
+        let nextCourse = $(currentCourse).next();
+        let subFinishDiv = document.getElementsByClassName('anew-text');
+        let alertMsg = document.getElementsByClassName('alert-msg');
+        let alertShadow = document.getElementsByClassName('alert-shadow');
+        let videoPlayer = document.getElementsByTagName('video');
+        if( nextCourse.length == 0 && (( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( subFinishDiv.length > 0 && subFinishDiv[0].textContent == '您已完成该课程的学习')))
+        {
+            changeTips();
+            clearInterval(watchCourseCyc);
+            closeWin();
+        }
+        else if( nextCourse.length > 0 && videoPlayer[0].currentTime == videoPlayer[0].duration && alertMsg.length == 0 )
+        {
+            // nextCourse.click();
+        }
+
+        else{
+            controlPlayer();
+        }
     }
     //如果不是从专题进入课程，而是直接观看课程，只控制播放，看完停止循环
-    let videoPlayer = document.getElementsByTagName('video');
-    if( videoPlayer.length > 0 && finishFlag == 0 && loadFlag == 0 && courseFlag == 0 )
+    else if( videoPlayer.length > 0 && finishFlag == 0 && loadFlag == 0 && courseFlag == 0 )
     {
         if( document.getElementById('studyTip') == null )
         {
@@ -226,29 +249,35 @@ var mainFunc = setInterval(function () {
         if( nextCourse.length == 0 && (( videoPlayer[0].currentTime == videoPlayer[0].duration ) || ( CoursefinishDiv.length > 0 && CoursefinishDiv[0].textContent == '您已完成该课程的学习')))
         {
             changeTips();
-            clearInterval(mainFunc);
+            console.log("单个课程学习完毕！");
+            clearInterval(watchCourseCyc);
         }
         // 没有重看提示，正常播放完，系统自动播放下一节
         else if( nextCourse.length > 0 && videoPlayer[0].currentTime == videoPlayer[0].duration && alertMsg.length == 0 )
         {
             // nextCourse.click();
+            console.log("自动播放下一节课程！");
         }
         // 有重看提示，重播
         else if( nextCourse.length > 0 && $('.alert-shadow').css('display') != 'none' && alertMsg.length > 0 && alertMsg[0].innerHTML == "本节课件还未完成学习，是否重新播放?" )
         {
             document.getElementsByClassName('btn-repeat btn-ok')[0].click();
+            console.log("重播本课程！");
         }
         else{
             controlPlayer();
         }
     }
-    //看完一个专题全部课程，停止循环
-    if( finishFlag == 1 && loadFlag == 1 && courseFlag == 1)
+    //不是课程播放页面
+    else
     {
-        let startButton = document.getElementById("startButton");
-        startButton.innerText = "已完成本专题学习";
-        startButton.style.cursor = "default";
-        startButton.setAttribute("disabled", true);
-        clearInterval(mainFunc);
+        watchCourseCyc_i++;
+        console.log("watchCourseCyc_i = " + watchCourseCyc_i);
     }
-}, reloadTime)
+    //确定不是课程播放页面，停止循环
+    if(watchCourseCyc_i > 2)
+    {
+        console.log("不是通过学习按钮进入!");
+        clearInterval(watchCourseCyc);
+    }
+},10000);
