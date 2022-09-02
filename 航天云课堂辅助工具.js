@@ -95,7 +95,7 @@ async function preWatchCourse(){
     for (let i = 0; i < courseLink.length; i++) {
         GM_setValue('watchingUrl', courseLink[i]);
         console.log("正在学习第" + (i + 1) + "节课");
-        let newPage = GM_openInTab(courseLink[i], { active: true, insert: true, setParent: true })
+        let newPage = GM_openInTab(courseLink[i], { active: false, insert: true, setParent: true })
         await waitingClose(newPage);
     }
     finishFlag = 1;
@@ -142,9 +142,16 @@ function controlPlayer()
     let playingBtns = document.getElementsByClassName('vjs-playing');
     let videoPlayer = document.getElementsByTagName('video');
     if(videoPlayer.length > 0 && ($('.alert-shadow').length == 0 || $('.alert-shadow').css('display') == 'none') && referseBtns.length > 0 && videoPlayer[0].paused == true ){
-        document.getElementsByClassName('videojs-referse-btn')[0].click();
-        setTimeout(() => console.log("视频已暂停，等待重新播放"), 3000)
+        referseBtns[0].click();
+        setTimeout(() => console.log("视频已暂停，等待重新播放"), 3000);
         videoPlayer[0].play();
+        //因浏览器策略（ play() failed because the user didn‘t interact）无法自动播放，静音后才可播放
+        if( videoPlayer[0].paused == true )
+        {
+            videoPlayer[0].muted = true;
+            videoPlayer[0].play();
+            pauseBtns[1].click();
+        }
     }
     let alertText = document.getElementsByClassName('alert-text');
     if( alertText.length > 0 && alertText[0].innerHTML == "亲爱的学员，目前学习正在计时中，请不要走开哦!" )
