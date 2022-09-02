@@ -7,9 +7,9 @@
 // @grant        GM_getValue
 // @grant        GM_deleteValue
 // @grant        GM_openInTab
-// @version      0.0.3
+// @version      0.0.4
 // @author       gtjl12
-// @description  2022/8/31, 23:12:22 PM
+// @description  2022/09/02, 14:28:22 PM
 // ==/UserScript==
 
 
