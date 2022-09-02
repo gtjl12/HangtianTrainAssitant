@@ -1,5 +1,9 @@
 # 航天云课堂辅助工具
 
+源码[gtjl12/HangtianTrainAssitant](https://github.com/gtjl12/HangtianTrainAssitant)。
+
+有问题请在[issues页面](https://github.com/gtjl12/HangtianTrainAssitant/issues)留言。
+
 ## 主要功能
 
 1. 专题课程页面生成学习按钮，全自动学习除  ***考试课程***  外的所有课程
