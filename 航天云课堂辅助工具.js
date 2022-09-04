@@ -95,7 +95,7 @@ async function preWatchCourse(){
     for (let i = 0; i < courseLink.length; i++) {
         GM_setValue('watchingUrl', courseLink[i]);
         console.log("正在学习第" + (i + 1) + "节课");
-        let newPage = GM_openInTab(courseLink[i], { active: false, insert: true, setParent: true })
+        let newPage = GM_openInTab(courseLink[i], { active: true, insert: true, setParent: true })
         await waitingClose(newPage);
     }
     finishFlag = 1;
